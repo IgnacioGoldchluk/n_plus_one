@@ -6,10 +6,8 @@ class TestPlayerView:
     def test_player_view_lists_players(
         self, api_client, player_factory, play_time_factory
     ):
-        p1 = player_factory()
+        [p1, p2] = player_factory.create_batch(2)
         p1_played = [play_time_factory(player=p1).game.title for _ in range(3)]
-
-        p2 = player_factory()
         p2_played = [play_time_factory(player=p2).game.title for _ in range(3)]
 
         response = api_client.get("/games/players", format="json").json()
@@ -29,10 +27,9 @@ class TestPlayerView:
         play_time_factory,
         django_assert_max_num_queries,
     ):
-        for _ in range(20):
-            player = player_factory()
-            for _ in range(20):
-                play_time_factory(player=player)
+        players = player_factory.create_batch(20)
+        for player in players:
+            play_time_factory.create_batch(20, player=player)
 
         with django_assert_max_num_queries(2):
             api_client.get("/games/players", format="json").json()
