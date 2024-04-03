@@ -5,5 +5,5 @@ from .serializers import PlayerSerializer
 
 
 class PlayerView(generics.ListAPIView):
-    queryset = Player.objects.with_playtimes()
+    queryset = Player.objects.with_playtimes().order_by("name")
     serializer_class = PlayerSerializer
