@@ -6,19 +6,21 @@ class TestPlayerView:
     def test_player_view_lists_players(
         self, api_client, player_factory, play_time_factory
     ):
-        [p1, p2] = player_factory.create_batch(2)
-        p1_played = [play_time_factory(player=p1).game.title for _ in range(3)]
-        p2_played = [play_time_factory(player=p2).game.title for _ in range(3)]
+        [p1, p2] = sorted(player_factory.create_batch(2), key=lambda player: player.name)
+        p1_playtimes = play_time_factory.create_batch(3, player=p1)
+        p2_playtimes = play_time_factory.create_batch(3, player=p2)
 
-        response = api_client.get("/games/players", format="json").json()
-        player_data = next(r for r in response if r["name"] == p1.name)
+        [p1_data, p2_data] = api_client.get("/games/players", format="json").json()
+        assert p1_data["name"] == p1.name
+        assert p2_data["name"] == p2.name
 
-        playtimes_titles = [p["game"]["title"] for p in player_data["playtimes"]]
-        assert all(played in playtimes_titles for played in p1_played)
+        p1_resp_titles = {playtime["game"]["title"] for playtime in p1_data["playtimes"]}
+        p1_data_titles = {playtime.game.title for playtime in p1_playtimes}
+        assert p1_resp_titles == p1_data_titles
 
-        player2_data = next(r for r in response if r["name"] == p2.name)
-        playtimes_titles = [p["game"]["title"] for p in player2_data["playtimes"]]
-        assert all(played in playtimes_titles for played in p2_played)
+        p2_resp_titles = {playtime["game"]["title"] for playtime in p2_data["playtimes"]}
+        p2_data_titles = {playtime.game.title for playtime in p2_playtimes}
+        assert p2_resp_titles == p2_data_titles
 
     def test_player_list_num_queries(
         self,
